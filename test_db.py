@@ -1,25 +1,23 @@
 import oracledb
 import pandas as pd
+from dotenv import load_dotenv
+import os
 
-# Parametri di connessione
-USER = "ENRI_DEV"
-PASSWORD = "Gigi2013"
-DSN = "192.168.64.4:1521/FREEPDB1"
+load_dotenv()  # Carica le variabili dal file .env
+
+USER = os.getenv("DB_USER")
+PASSWORD = os.getenv("DB_PASSWORD")
+DSN = os.getenv("DB_DSN")
 
 try:
     with oracledb.connect(user=USER, password=PASSWORD, dsn=DSN) as connection:
         print("✅ Connesso a Oracle!")
 
-        # 1. Leggi la tabella clienti con Pandas
         df = pd.read_sql("SELECT * FROM clienti", con=connection)
 
-
-        # 2. Controlla i dati
-        print(df.head())
-
-        # 3. Esporta in CSV
-        df.to_csv("clienti_output.csv", index=False)
-        print("✅ File clienti_output.csv creato!")
+        print(df.head())           # mostra prime 5 righe
+        df.to_csv("clienti_output.csv", index=False)  # scarica su disco
+        print("✅ clienti_output.csv creato!")
 
 except Exception as e:
     print(f"❌ Errore: {e}")
