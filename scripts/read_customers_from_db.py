@@ -1,19 +1,18 @@
-import oracledb
 import pandas as pd
 from dotenv import load_dotenv
 import os
+from sqlalchemy import create_engine, text
 
 load_dotenv()  # Load variables from .env file
 
-USER = os.getenv("DB_USER")
-PASSWORD = os.getenv("DB_PASSWORD")
-DSN = os.getenv("DB_DSN")
+DATABASE_URL = os.getenv("DATABASE_URL")
+engine = create_engine(DATABASE_URL)
 
 try:
-    with oracledb.connect(user=USER, password=PASSWORD, dsn=DSN) as connection:
+    with engine.connect() as connection:
         print("✅ Connected to Oracle!")
 
-        df = pd.read_sql("SELECT * FROM customers", con=connection)
+        df = pd.read_sql(text("SELECT * FROM customers"), con=connection)
 
         print(df.head())           # show first 5 rows
         df.to_csv("customers_output.csv", index=False)  # download to disk

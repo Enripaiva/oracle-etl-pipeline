@@ -6,7 +6,7 @@ names = [
     "Daniele Conti", "Sofia De Luca", "Lorenzo Mancini", "Giorgia Costa",
     "Simone Giordano", "Martina Lombardi", "Emanuele Barbieri", "Alice Fontana",
     "Tommaso Greco", "Beatrice Ricci", "Riccardo Colombo", "Camilla Romano",
-    "Gabriele Esposito", "Aurora Ferrari", "Nicolo Verdi", "Giada Bianchi"
+    "Gabriele Esposito", "Aurora Ferrari", "Nicolo Verdi", "Giada Bianchi",
     "Mario Rossi", "Laura Bianchi", "Giorgio Verdi", "Anna Ferrari",
     "Luca Esposito", "Giulia Romano", "Marco Colombo", "Sara Ricci",
     "Paolo Marino", "Chiara Greco", "Davide Bruno", "Elena Gallo",
