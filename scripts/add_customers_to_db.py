@@ -6,9 +6,6 @@ from sqlalchemy import create_engine, text
 
 load_dotenv()
 
-USER = os.getenv("DB_USER")
-PASSWORD = os.getenv("DB_PASSWORD")
-DSN = os.getenv("DB_DSN")
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 # 1. Read CSV
