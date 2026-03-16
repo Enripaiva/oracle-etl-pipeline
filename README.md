@@ -12,7 +12,7 @@ ETL pipeline connecting Oracle FREEPDB1 with Python and Pandas.
 1. Create a virtual environment: `python3 -m venv venv`
 2. Install dependencies: `pip install -r requirements.txt`
 3. Create a `.env` file with your database URL:
-   `DATABASE_URL=oracle+oracledb://<user>:<password>@<dsn>`
+   `DATABASE_URL=oracle+oracledb://<user>:<password>@<ip>:<port>/?service_name=<service_name>`
 
 ## Run
 1. Generate source CSV: `python scripts/create_customers_csv.py`
