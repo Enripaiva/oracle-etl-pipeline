@@ -1,5 +1,6 @@
 import pandas as pd
 import random
+from pathlib import Path
 
 names = [
     "Antonio Russo", "Francesca Leone", "Roberto Gallo", "Isabella Marino",
@@ -22,6 +23,15 @@ cities = [
 
 random.seed(42)
 
+CSV_DIR = Path("csv_docs")
+
+
+def get_output_path(base_filename: str) -> Path:
+    CSV_DIR.mkdir(parents=True, exist_ok=True)
+
+    base_path = CSV_DIR / base_filename
+    return base_path
+
 customers = []
 for i in range(1, 101):
     customers.append({
@@ -32,5 +42,6 @@ for i in range(1, 101):
     })
 
 df = pd.DataFrame(customers)
-df.to_csv("customers.csv", index=False)
-print(f"✅ Created {len(df)} customers in customers.csv!")
+output_path = get_output_path("customers.csv")
+df.to_csv(output_path, index=False)
+print(f"✅ Created {len(df)} customers in {output_path}!")
