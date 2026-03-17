@@ -1,6 +1,7 @@
-import pandas as pd
 import random
 from pathlib import Path
+
+import pandas as pd
 
 names = [
     "Antonio Russo", "Francesca Leone", "Roberto Gallo", "Isabella Marino",

@@ -1,47 +1,67 @@
 from pathlib import Path
-import re
+
 import pandas as pd
 
+SCRIPT_DIR = Path(__file__).resolve().parent
+PROJECT_ROOT = SCRIPT_DIR.parent
+CSV_DIR = PROJECT_ROOT / "csv_docs"
 
-CSV_DIR = Path("csv_docs")
+INPUT_PATH = CSV_DIR / "customers_output.csv"
+FILTERED_OUTPUT_PATH = CSV_DIR / "customers_filtered.csv"
+SUMMARY_OUTPUT_PATH = CSV_DIR / "customers_city_summary.csv"
 
-
-def is_customers_input_file(path: Path) -> bool:
-    return bool(re.fullmatch(r"customers(?:_\d+)?", path.stem))
-
-
-def get_latest_input_path() -> Path:
-    CSV_DIR.mkdir(parents=True, exist_ok=True)
-    candidates = [path for path in CSV_DIR.glob("customers*.csv") if is_customers_input_file(path)]
-
-    if not candidates:
-        raise FileNotFoundError(
-            f"No customer input CSV found in {CSV_DIR}. Run create_customers_csv.py first."
-        )
-
-    return max(candidates, key=lambda p: p.stat().st_mtime)
+REQUIRED_COLUMNS = {"id", "name", "city", "revenue"}
+REVENUE_THRESHOLD = 30_000
 
 
-def get_output_path(base_filename: str) -> Path:
-    CSV_DIR.mkdir(parents=True, exist_ok=True)
+def main() -> int:
+    try:
+        source_df = load_data(INPUT_PATH)
+        cleaned_df = clean_data(source_df)
+        filtered_df = build_filtered_data(cleaned_df)
+        summary_df = build_summary_data(filtered_df)
 
-    base_path = CSV_DIR / base_filename
-    return base_path
+        save_csv(filtered_df, FILTERED_OUTPUT_PATH)
+        save_csv(summary_df, SUMMARY_OUTPUT_PATH)
+
+        print(f"✅ Created: {FILTERED_OUTPUT_PATH}")
+        print(f"✅ Created: {SUMMARY_OUTPUT_PATH}")
+        return 0
+    except Exception as exc:
+        print(f"❌ Error in transform_customers.py: {exc}")
+        return 1
 
 
-def main() -> None:
-    input_path = get_latest_input_path()
-    filtered_output_path = get_output_path("customers_filtered.csv")
-    summary_output_path = get_output_path("customers_city_summary.csv")
+def load_data(path: Path) -> pd.DataFrame:
+    if not path.exists():
+        raise FileNotFoundError(f"Input file non trovato: {path}")
 
-    df = pd.read_csv(input_path)
-    print(f"Loaded {len(df)} rows from {input_path}.")
+    df = pd.read_csv(path)
+    missing_columns = REQUIRED_COLUMNS - set(df.columns)
+    if missing_columns:
+        raise ValueError(f"Colonne mancanti nel CSV: {sorted(missing_columns)}")
 
-    # 1) Filter customers with higher revenue.
-    filtered_df = df[df["revenue"] >= 30000].copy()
+    return df
 
-    # 2) Rename columns to clearer names for downstream usage.
-    filtered_df = filtered_df.rename(
+
+def clean_data(df: pd.DataFrame) -> pd.DataFrame:
+    cleaned_df = df.copy()
+
+    cleaned_df["revenue"] = pd.to_numeric(cleaned_df["revenue"], errors="coerce")
+    median_revenue = cleaned_df["revenue"].median()
+
+    if pd.isna(median_revenue):
+        median_revenue = 0
+
+    cleaned_df["name"] = cleaned_df["name"].fillna("Unknown Customer")
+    cleaned_df["city"] = cleaned_df["city"].fillna("Unknown City")
+    cleaned_df["revenue"] = cleaned_df["revenue"].fillna(median_revenue)
+
+    return cleaned_df
+
+
+def build_filtered_data(df: pd.DataFrame) -> pd.DataFrame:
+    return df[df["revenue"] >= REVENUE_THRESHOLD].rename(
         columns={
             "id": "customer_id",
             "name": "customer_name",
@@ -49,16 +69,10 @@ def main() -> None:
         }
     )
 
-    # 3) Fill missing values to keep dataset analysis-ready.
-    filtered_df["customer_name"] = filtered_df["customer_name"].fillna("Unknown Customer")
-    filtered_df["city"] = filtered_df["city"].fillna("Unknown City")
-    filtered_df["annual_revenue"] = filtered_df["annual_revenue"].fillna(
-        filtered_df["annual_revenue"].median()
-    )
 
-    # 4) Group by city for KPI-style summary output.
-    summary_df = (
-        filtered_df.groupby("city", as_index=False)
+def build_summary_data(df: pd.DataFrame) -> pd.DataFrame:
+    return (
+        df.groupby("city", as_index=False)
         .agg(
             customer_count=("customer_id", "count"),
             avg_revenue=("annual_revenue", "mean"),
@@ -66,15 +80,12 @@ def main() -> None:
         )
         .sort_values("total_revenue", ascending=False)
     )
-    summary_df["avg_revenue"] = summary_df["avg_revenue"].round(2)
 
-    filtered_df.to_csv(filtered_output_path, index=False)
-    summary_df.to_csv(summary_output_path, index=False)
 
-    print(f"Saved filtered dataset to {filtered_output_path} ({len(filtered_df)} rows).")
-    print(f"Saved city summary to {summary_output_path} ({len(summary_df)} rows).")
-    print(summary_df.head())
+def save_csv(df: pd.DataFrame, path: Path) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    df.to_csv(path, index=False)
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())
